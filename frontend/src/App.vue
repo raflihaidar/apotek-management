@@ -31,7 +31,7 @@ const form = ref({
 const save = () =>
   localStorage.setItem("apotek_data", JSON.stringify(data.value))
 
-// SIMPAN DATA
+// SIMPAN
 const simpan = (tipe) => {
   let f = form.value[tipe]
 
@@ -56,7 +56,7 @@ const simpan = (tipe) => {
   }
 }
 
-// EXPORT EXCEL
+// EXPORT
 const exportExcel = () => {
   if (data.value.length === 0) {
     alert("Data kosong!")
@@ -95,6 +95,11 @@ const simpanEdit = () => {
   save()
 }
 
+// FILTER HISTORY
+const filteredData = computed(() =>
+  data.value.filter((d) => d.tipe === tab)
+)
+
 // TOTAL
 const totalJual = computed(() =>
   data.value.filter(d => d.tipe === "jual").reduce((a, b) => a + b.nilai, 0)
@@ -118,7 +123,6 @@ const formatRp = (n) =>
 
 <template>
   <div class="min-h-screen bg-slate-900 text-white">
-
     <div class="max-w-6xl mx-auto p-6 space-y-6">
 
       <!-- HEADER -->
@@ -129,29 +133,27 @@ const formatRp = (n) =>
 
       <!-- SUMMARY -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-
-        <div class="bg-slate-800 p-4 rounded-xl">
-          <p class="text-xs text-slate-400">Penjualan</p>
-          <p class="text-green-400 font-bold">Rp {{ formatRp(totalJual) }}</p>
+        <div class="card">
+          <p>Penjualan</p>
+          <h2 class="text-green-400">Rp {{ formatRp(totalJual) }}</h2>
         </div>
 
-        <div class="bg-slate-800 p-4 rounded-xl">
-          <p class="text-xs text-slate-400">Pembelian</p>
-          <p class="text-blue-400 font-bold">Rp {{ formatRp(totalBeli) }}</p>
+        <div class="card">
+          <p>Pembelian</p>
+          <h2 class="text-blue-400">Rp {{ formatRp(totalBeli) }}</h2>
         </div>
 
-        <div class="bg-slate-800 p-4 rounded-xl">
-          <p class="text-xs text-slate-400">Pengeluaran</p>
-          <p class="text-red-400 font-bold">Rp {{ formatRp(totalKeluar) }}</p>
+        <div class="card">
+          <p>Pengeluaran</p>
+          <h2 class="text-red-400">Rp {{ formatRp(totalKeluar) }}</h2>
         </div>
 
-        <div class="bg-slate-800 p-4 rounded-xl">
-          <p class="text-xs text-slate-400">Laba</p>
-          <p :class="labaNet >= 0 ? 'text-green-400' : 'text-red-400'" class="font-bold">
+        <div class="card">
+          <p>Laba</p>
+          <h2 :class="labaNet >= 0 ? 'text-green-400' : 'text-red-400'">
             Rp {{ formatRp(labaNet) }}
-          </p>
+          </h2>
         </div>
-
       </div>
 
       <!-- TAB -->
@@ -163,40 +165,58 @@ const formatRp = (n) =>
       </div>
 
       <!-- FORM -->
-      <div class="bg-slate-800 p-5 rounded-xl space-y-3">
+      <div class="card">
 
         <div v-if="tab === 'jual'">
+          <label>Tanggal</label>
           <input type="date" v-model="form.jual.tanggal" class="input" />
-          <input type="number" v-model="form.jual.nilai" placeholder="Nilai" class="input" />
-          <input type="text" v-model="form.jual.ket" placeholder="Keterangan" class="input" />
+
+          <label>Nilai</label>
+          <input type="number" placeholder="Masukkan nilai" v-model="form.jual.nilai" class="input" />
+
+          <label>Keterangan</label>
+          <input type="text" placeholder="Keterangan" v-model="form.jual.ket" class="input" />
+
           <button @click="simpan('jual')" class="btn-green">Simpan</button>
         </div>
 
         <div v-if="tab === 'pembelian'">
+          <label>Tanggal</label>
           <input type="date" v-model="form.pembelian.tanggal" class="input" />
+
+          <label>Nilai</label>
           <input type="number" v-model="form.pembelian.nilai" class="input" />
+
+          <label>Keterangan</label>
           <input type="text" v-model="form.pembelian.ket" class="input" />
+
           <button @click="simpan('pembelian')" class="btn-blue">Simpan</button>
         </div>
 
         <div v-if="tab === 'pengeluaran'">
+          <label>Tanggal</label>
           <input type="date" v-model="form.pengeluaran.tanggal" class="input" />
+
+          <label>Jenis</label>
           <select v-model="form.pengeluaran.jenis" class="input">
             <option v-for="j in jenisKeluar" :key="j">{{ j }}</option>
           </select>
+
+          <label>Nilai</label>
           <input type="number" v-model="form.pengeluaran.nilai" class="input" />
+
+          <label>Keterangan</label>
           <input type="text" v-model="form.pengeluaran.ket" class="input" />
+
           <button @click="simpan('pengeluaran')" class="btn-red">Simpan</button>
         </div>
 
         <!-- REKAP -->
         <div v-if="tab === 'rekap'" class="space-y-4">
 
-          <div class="bg-slate-700 p-4 rounded-lg flex justify-between">
+          <div class="export-box">
             <span>Export Laporan</span>
-            <button @click="exportExcel" class="bg-green-500 px-3 py-1 rounded">
-              Export
-            </button>
+            <button @click="exportExcel" class="btn-green">Export</button>
           </div>
 
           <p>Penjualan: Rp {{ formatRp(totalJual) }}</p>
@@ -209,39 +229,29 @@ const formatRp = (n) =>
       </div>
 
       <!-- HISTORY -->
-      <div class="bg-slate-800 p-5 rounded-xl space-y-3">
+      <div v-if="tab !== 'rekap'" class="card">
 
-        <h2 class="font-bold">History Transaksi</h2>
+        <h2 class="font-bold mb-2">History</h2>
 
-        <div v-for="item in data" :key="item.id" class="bg-slate-700 p-3 rounded">
+        <div v-for="item in filteredData" :key="item.id" class="history-item">
 
-          <!-- VIEW -->
           <div v-if="editId !== item.id" class="flex justify-between">
             <div>
-              <p :class="{
-                'text-green-400': item.tipe === 'jual',
-                'text-blue-400': item.tipe === 'pembelian',
-                'text-red-400': item.tipe === 'pengeluaran'
-              }">
-                {{ item.tipe }} - Rp {{ formatRp(item.nilai) }}
-              </p>
-              <p class="text-xs">{{ item.tanggal }} | {{ item.ket }}</p>
+              <p>{{ item.tipe }} - Rp {{ formatRp(item.nilai) }}</p>
+              <small>{{ item.tanggal }} | {{ item.ket }}</small>
             </div>
 
             <div class="flex gap-2">
-              <button @click="mulaiEdit(item)" class="bg-yellow-500 px-2 rounded text-xs">Edit</button>
-              <button @click="hapus(item.id)" class="bg-red-500 px-2 rounded text-xs">Hapus</button>
+              <button @click="mulaiEdit(item)" class="btn-yellow">Edit</button>
+              <button @click="hapus(item.id)" class="btn-red">Hapus</button>
             </div>
           </div>
 
-          <!-- EDIT -->
-          <div v-else class="space-y-2">
+          <div v-else>
             <input type="date" v-model="item.tanggal" class="input" />
             <input type="number" v-model="item.nilai" class="input" />
             <input type="text" v-model="item.ket" class="input" />
-            <button @click="simpanEdit()" class="bg-green-500 px-3 py-1 rounded">
-              Simpan
-            </button>
+            <button @click="simpanEdit()" class="btn-green">Simpan</button>
           </div>
 
         </div>
@@ -253,17 +263,30 @@ const formatRp = (n) =>
 </template>
 
 <style>
+.card {
+  background: #1e293b;
+  padding: 16px;
+  border-radius: 12px;
+}
+
 .input {
   width: 100%;
-  padding: 8px;
-  border-radius: 6px;
-  background: #1e293b;
-  margin-bottom: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: white;
+  margin-bottom: 10px;
+}
+
+.input:focus {
+  border-color: #6366f1;
+  outline: none;
 }
 
 .btn {
   padding: 8px 12px;
-  background: #1e293b;
+  background: #334155;
   border-radius: 6px;
 }
 
@@ -287,5 +310,26 @@ const formatRp = (n) =>
   background: #ef4444;
   padding: 8px;
   border-radius: 6px;
+}
+
+.btn-yellow {
+  background: #eab308;
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.export-box {
+  display: flex;
+  justify-content: space-between;
+  background: #334155;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.history-item {
+  background: #334155;
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 10px;
 }
 </style>
